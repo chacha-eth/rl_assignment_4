@@ -1,4 +1,5 @@
-gymnasium[all]
+streamlit
+numpy
 matplotlib
 seaborn
-streamlit
+gymnasium
