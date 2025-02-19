@@ -10,7 +10,7 @@ from sarsa_agent import SarsaCliffWalkingAgent
 FIGURE_DIR = "figures"
 os.makedirs(FIGURE_DIR, exist_ok=True)
 
-# Function to plot and save heatmap of learned values
+# Function to plot and save heatmap of Monte Carlo value function
 def plot_value_function(V, title, filename):
     player_sums = np.arange(12, 22)
     dealer_cards = np.arange(1, 11)
@@ -30,10 +30,11 @@ def plot_value_function(V, title, filename):
     # Save figure
     fig_path = os.path.join(FIGURE_DIR, filename)
     fig.savefig(fig_path)
-    
-    st.pyplot(fig)
+    plt.close()
 
-# Function to plot and save Cliff Walking Q-values
+    st.image(fig_path, caption=title)
+
+# Function to plot and save heatmap of SARSA Q-values
 def plot_q_values(Q, title, filename):
     q_values_matrix = np.zeros((4, 12))  # 4x12 grid
     for state in Q:
@@ -48,8 +49,9 @@ def plot_q_values(Q, title, filename):
     # Save figure
     fig_path = os.path.join(FIGURE_DIR, filename)
     fig.savefig(fig_path)
-    
-    st.pyplot(fig)
+    plt.close()
+
+    st.image(fig_path, caption=title)
 
 # Function to plot and save convergence graph
 def plot_convergence(convergence, title, filename):
@@ -64,8 +66,48 @@ def plot_convergence(convergence, title, filename):
     # Save figure
     fig_path = os.path.join(FIGURE_DIR, filename)
     fig.savefig(fig_path)
+    plt.close()
 
-    st.pyplot(fig)
+    st.image(fig_path, caption=title)
+
+# Function to plot and save cumulative rewards per episode
+def plot_cumulative_rewards(rewards, title, filename):
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(range(1, len(rewards) + 1), rewards, label="Cumulative Reward", color="orange")
+    ax.set_xlabel("Episodes")
+    ax.set_ylabel("Total Reward")
+    ax.set_title(title)
+    ax.legend()
+    ax.grid()
+
+    # Save figure
+    fig_path = os.path.join(FIGURE_DIR, filename)
+    fig.savefig(fig_path)
+    plt.close()
+
+    st.image(fig_path, caption=title)
+
+# Function to visualize and save the learned policy for Cliff Walking
+def plot_policy(policy_grid, title, filename):
+    plt.figure(figsize=(10, 6))
+    ax = sns.heatmap(np.zeros((4, 12)), cbar=False, linewidths=0.5, linecolor="gray")
+    
+    for i in range(4):
+        for j in range(12):
+            plt.text(j + 0.5, i + 0.5, policy_grid[i, j], ha="center", va="center", fontsize=14)
+
+    plt.xticks(np.arange(12) + 0.5, np.arange(12))
+    plt.yticks(np.arange(4) + 0.5, np.arange(4))
+    plt.xlabel("Grid Columns")
+    plt.ylabel("Grid Rows")
+    plt.title(title)
+
+    # Save figure
+    fig_path = os.path.join(FIGURE_DIR, filename)
+    plt.savefig(fig_path)
+    plt.close()
+
+    st.image(fig_path, caption=title)
 
 # UI setup
 st.sidebar.header("Select Algorithm")
@@ -87,18 +129,23 @@ if st.sidebar.button("Train Agent"):
             st.write(f"Training Monte Carlo agent for Blackjack ({num_episodes} episodes)...")
             agent = MonteCarloBlackjackAgent(episodes=num_episodes)
             progress_bar = st.progress(0)
-            V, convergence = agent.train(progress_bar.progress)
+            V, convergence, rewards = agent.train(progress_bar.progress)
 
             st.subheader("Monte Carlo Algorithm - Blackjack Results")
             plot_value_function(V, "Monte Carlo State-Value Function for Blackjack", "monte_carlo_blackjack_value_function.png")
             plot_convergence(convergence, "Monte Carlo Convergence Plot for Blackjack", "monte_carlo_blackjack_convergence.png")
+            plot_cumulative_rewards(rewards, "Monte Carlo Cumulative Rewards per Episode", "monte_carlo_blackjack_rewards.png")
 
         elif env_choice == "SARSA - Cliff Walking":
             st.write(f"Training SARSA agent for Cliff Walking ({num_episodes} episodes)...")
             agent = SarsaCliffWalkingAgent(episodes=num_episodes)
             progress_bar = st.progress(0)
-            Q, convergence = agent.train(progress_bar.progress)
+            Q, convergence, rewards = agent.train(progress_bar.progress)
+
+            policy_grid = agent.get_policy()  # Extract learned policy
 
             st.subheader("SARSA Algorithm - Cliff Walking Results")
             plot_q_values(Q, "SARSA Q-Value Heatmap for Cliff Walking", "sarsa_cliff_walking_q_values.png")
             plot_convergence(convergence, "SARSA Convergence Plot for Cliff Walking", "sarsa_cliff_walking_convergence.png")
+            plot_cumulative_rewards(rewards, "SARSA Cumulative Rewards per Episode", "sarsa_cliff_walking_rewards.png")
+            # plot_policy(policy_grid, "SARSA Learned Policy Visualization", "sarsa_cliff_walking_policy.png")
