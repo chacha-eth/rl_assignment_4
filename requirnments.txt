@@ -1,0 +1,4 @@
+gymnasium[all]
+matplotlib
+seaborn
+streamlit
